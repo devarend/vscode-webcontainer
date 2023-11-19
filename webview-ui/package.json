@@ -1,0 +1,38 @@
+{
+  "name": "server",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:debug": "vitest run --inspect-brk --threads false --coverage false",
+    "lint:type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@codesandbox/nodebox": "^0.1.8",
+    "@vscode/webview-ui-toolkit": "^1.2.2",
+    "classnames": "^2.3.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
+  },
+  "devDependencies": {
+    "@hankei6km/rollup-plugin-nodebox-fs-files": "^0.1.2",
+    "@testing-library/jest-dom": "^6.0.1",
+    "@testing-library/react": "^14.1.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@types/vscode-webview": "^1.57.4",
+    "@vitejs/plugin-react": "^4.1.1",
+    "@vitest/coverage-v8": "^0.34.6",
+    "chanpuru": "^0.2.2",
+    "jsdom": "^22.0.0",
+    "typescript": "^5.2.2",
+    "vite": "^4.5.0",
+    "vitest": "^0.34.5"
+  }
+}
