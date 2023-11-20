@@ -1,26 +1,34 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import {window, ViewColumn, ExtensionContext, commands, Uri} from 'vscode';
+import {window, ViewColumn, ExtensionContext, commands, Uri, WebviewPanel} from 'vscode';
+import {CatCodingPanel, getWebviewOptions} from "./panel/WebcontainerPanel";
 
 export function activate(context: ExtensionContext) {
-    console.log('Congratulations, your extension "vscode-webcontainer" is now active in the web extension host!');
-    let disposable = commands.registerCommand('vscode-webcontainer.helloWorld', () => {
-        window.showInformationMessage('Hello World from vscode-webcontainer in a web extension host!');
-        const panel = window.createWebviewPanel(
-            'serverPanel',
-            'terminal',
-            ViewColumn.One,
-            {
-                enableScripts: true,
-                retainContextWhenHidden: true,
-                localResourceRoots: [
-                    Uri.joinPath(context.extensionUri, 'out'),
-                    Uri.joinPath(context.extensionUri, 'ui/build')]
-            }
-        )
-    });
+    context.subscriptions.push(
+        commands.registerCommand('vscode-webcontainer.helloWorld', () => {
+            CatCodingPanel.createOrShow(context.extensionUri);
+        })
+    );
 
-    context.subscriptions.push(disposable);
+    context.subscriptions.push(
+        commands.registerCommand('catCoding.doRefactor', () => {
+            if (CatCodingPanel.currentPanel) {
+                CatCodingPanel.currentPanel.doRefactor();
+            }
+        })
+    );
+
+    if (window.registerWebviewPanelSerializer) {
+        // Make sure we register a serializer in activation event
+        window.registerWebviewPanelSerializer(CatCodingPanel.viewType, {
+            async deserializeWebviewPanel(webviewPanel: WebviewPanel, state: any) {
+                console.log(`Got state: ${state}`);
+                // Reset the webview options so we use latest uri for `localResourceRoots`.
+                webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
+                CatCodingPanel.revive(webviewPanel, context.extensionUri);
+            }
+        });
+    }
 }
 
 // This method is called when your extension is deactivated
