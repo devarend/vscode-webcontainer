@@ -1,84 +1,51 @@
 {
-  "name": "vscode-ext-start-webcontainer",
-  "displayName": "Start WebContainer",
-  "description": "Start WebContainer, and use Jsh and Preview URL.",
-  "version": "0.4.0",
-  "author": "hankei6km <hankei6km@gmail.com> (https://github.com/hankei6km)",
-  "license": "MIT",
-  "publisher": "hankei6km",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hankei6km/vscode-ext-start-webcontainer"
-  },
-  "bugs": {
-    "url": "https://github.com/hankei6km/vscode-ext-start-webcontainer/issues"
-  },
+  "name": "vscode-webcontainer",
+  "displayName": "vscode-webcontainer",
+  "description": "webcontainer in vscode",
+  "version": "0.0.1",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.84.0"
   },
-  "icon": "images/icon.png",
   "categories": [
     "Other"
   ],
-  "keywords": [
-    "webcontainer",
-    "node"
-  ],
-  "type": "module",
-  "browser": "./out/web/extension.js",
+  "activationEvents": [],
+  "browser": "./dist/web/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "start-webcontainer.startWebContainer",
-        "title": "Start WebContainer: Start"
-      },
-      {
-        "command": "start-webcontainer.openWebContainerPreview",
-        "title": "Start WebContainer: Preview"
-      },
-      {
-        "command": "start-webcontainer.pickAllFiles",
-        "title": "Start WebContainer: Pick up all files from a container"
+        "command": "vscode-webcontainer.helloWorld",
+        "title": "Hello World"
       }
     ]
   },
   "scripts": {
-    "install:all": "npm install && cd webview-ui && npm install && cd ../server && npm install",
-    "ci:all": "npm ci && cd webview-ui && npm ci && cd ../server && npm ci",
-    "start:webview": "cd webview-ui && npm run start",
-    "build:webview": "cd webview-ui && npm run build",
-    "vscode:prepublish": "npm run build:all && bash scripts/gen-changelog.sh",
-    "compile": "rollup --config",
-    "build": "rollup --config",
-    "build:all": "rollup --config && npm run build:webview",
-    "watch": "rollup --config --watch",
-    "run-in-browser": "vscode-test-web --port 3000 --browserType=none --extensionDevelopmentPath=. .",
-    "run-in-browser:empty": "vscode-test-web --port 3000 --browserType=none --extensionDevelopmentPath=.",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:run-all": "vitest run && cd webview-ui && npm run test:run && cd ../server && npm run test:run",
-    "test:debug": "vitest run --inspect-brk --threads false --coverage false",
-    "lint:type-check": "tsc --noEmit",
-    "lint:type-check-all": "tsc --noEmit && cd webview-ui && npm run lint:type-check && cd ../server && npm run lint:type-check"
+    "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
+    "pretest": "yarn run compile-web",
+    "install-all": "yarn && cd web-ui && yarn",
+    "build-all": "webpack && cd web-ui && yarn build",
+    "vscode:prepublish": "yarn run package-web",
+    "compile-web": "webpack",
+    "watch-web": "webpack --watch",
+    "package-web": "webpack --mode production --devtool hidden-source-map",
+    "lint": "eslint src --ext ts",
+    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ."
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-typescript": "^11.1.5",
-    "@types/node": "^20.9.0",
-    "@types/vscode": "^1.84.1",
-    "@vitest/coverage-v8": "^0.34.6",
+    "@types/mocha": "^10.0.3",
+    "@types/vscode": "^1.84.0",
+    "@types/webpack-env": "^1.18.3",
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0",
     "@vscode/test-web": "^0.0.48",
-    "@vscode/vsce": "^2.22.0",
+    "assert": "^2.1.0",
+    "eslint": "^8.52.0",
+    "mocha": "^10.2.0",
     "prettier": "^3.1.0",
-    "rollup": "^4.4.0",
+    "process": "^0.11.10",
+    "ts-loader": "^9.5.0",
     "typescript": "^5.2.2",
-    "vite": "^4.5.0",
-    "vitest": "^0.34.6",
-    "vscode-test": "^1.5.0"
-  },
-  "dependencies": {
-    "chanpuru": "^0.2.2",
-    "minimatch": "^9.0.3"
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
   }
 }
