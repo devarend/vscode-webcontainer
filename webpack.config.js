@@ -42,7 +42,7 @@ const webExtensionConfig = {
 	module: {
 		rules: [{
 			test: /\.ts$/,
-			exclude: /node_modules/,
+			exclude: [/node_modules/, /web-ui/],
 			use: [{
 				loader: 'ts-loader'
 			}]
