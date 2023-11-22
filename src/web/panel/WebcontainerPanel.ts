@@ -1,31 +1,26 @@
 import {Uri, ViewColumn, Webview, WebviewOptions, WebviewPanel, window, Disposable} from "vscode";
 
-const cats = {
-    'Coding Cat': 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',
-    'Compiling Cat': 'https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif',
-    'Testing Cat': 'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif'
-};
-
 export function getWebviewOptions(extensionUri: Uri): WebviewOptions {
     return {
         // Enable javascript in the webview
         enableScripts: true,
 
         // And restrict the webview to only loading content from our extension's `media` directory.
-        localResourceRoots: [Uri.joinPath(extensionUri, 'media')]
+        localResourceRoots: [          Uri.joinPath(extensionUri, 'out'),
+            Uri.joinPath(extensionUri, 'web-ui/build')]
     };
 }
 
 /**
- * Manages cat coding webview panels
+ * Manages webcontainer webview panels
  */
-export class CatCodingPanel {
+export class WebcontainerPanel {
     /**
      * Track the currently panel. Only allow a single panel to exist at a time.
      */
-    public static currentPanel: CatCodingPanel | undefined;
+    public static currentPanel: WebcontainerPanel | undefined;
 
-    public static readonly viewType = 'catCoding';
+    public static readonly viewType = 'webcontainer';
 
     private readonly _panel: WebviewPanel;
     private readonly _extensionUri: Uri;
@@ -37,24 +32,24 @@ export class CatCodingPanel {
             : undefined;
 
         // If we already have a panel, show it.
-        if (CatCodingPanel.currentPanel) {
-            CatCodingPanel.currentPanel._panel.reveal(column);
+        if (WebcontainerPanel.currentPanel) {
+            WebcontainerPanel.currentPanel._panel.reveal(column);
             return;
         }
 
         // Otherwise, create a new panel.
         const panel = window.createWebviewPanel(
-            CatCodingPanel.viewType,
-            'Cat Coding',
+            WebcontainerPanel.viewType,
+            'terminal',
             column || ViewColumn.One,
             getWebviewOptions(extensionUri),
         );
 
-        CatCodingPanel.currentPanel = new CatCodingPanel(panel, extensionUri);
+        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri);
     }
 
     public static revive(panel: WebviewPanel, extensionUri: Uri) {
-        CatCodingPanel.currentPanel = new CatCodingPanel(panel, extensionUri);
+        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri);
     }
 
     private constructor(panel: WebviewPanel, extensionUri: Uri) {
@@ -62,22 +57,13 @@ export class CatCodingPanel {
         this._extensionUri = extensionUri;
 
         // Set the webview's initial html content
-        this._update();
-
+        this._panel.webview.html = this._getHtmlForWebview(
+            this._panel.webview
+        )
         // Listen for when the panel is disposed
         // This happens when the user closes the panel or when the panel is closed programmatically
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
-        // Update the content based on view changes
-        this._panel.onDidChangeViewState(
-            e => {
-                if (this._panel.visible) {
-                    this._update();
-                }
-            },
-            null,
-            this._disposables
-        );
 
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
@@ -100,7 +86,7 @@ export class CatCodingPanel {
     }
 
     public dispose() {
-        CatCodingPanel.currentPanel = undefined;
+        WebcontainerPanel.currentPanel = undefined;
 
         // Clean up our resources
         this._panel.dispose();
@@ -113,45 +99,18 @@ export class CatCodingPanel {
         }
     }
 
-    private _update() {
-        const webview = this._panel.webview;
-
-        // Vary the webview's content based on where it is located in the editor.
-        switch (this._panel.viewColumn) {
-            case ViewColumn.Two:
-                this._updateForCat(webview, 'Compiling Cat');
-                return;
-
-            case ViewColumn.Three:
-                this._updateForCat(webview, 'Testing Cat');
-                return;
-
-            case ViewColumn.One:
-            default:
-                this._updateForCat(webview, 'Coding Cat');
-                return;
-        }
-    }
-
-    private _updateForCat(webview: Webview, catName: keyof typeof cats) {
-        this._panel.title = catName;
-        this._panel.webview.html = this._getHtmlForWebview(webview, cats[catName]);
-    }
-
-    private _getHtmlForWebview(webview: Webview, catGifPath: string) {
+    private _getHtmlForWebview(webview: Webview) {
         // Local path to main script run in the webview
-        const scriptPathOnDisk = Uri.joinPath(this._extensionUri, 'media', 'main.js');
+        const scriptPath = Uri.joinPath(this._extensionUri, 'web-ui', 'dist', 'assets', 'index.js');
 
         // And the uri we use to load this script in the webview
-        const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
+        const scriptUri = webview.asWebviewUri(scriptPath);
 
         // Local path to css styles
-        const styleResetPath = Uri.joinPath(this._extensionUri, 'media', 'reset.css');
-        const stylesPathMainPath = Uri.joinPath(this._extensionUri, 'media', 'vscode.css');
+        const styletPath = Uri.joinPath(this._extensionUri, 'web-ui', 'dist', 'assets', 'index.css');
 
         // Uri to load styles into webview
-        const stylesResetUri = webview.asWebviewUri(styleResetPath);
-        const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
+        const stylesUri = webview.asWebviewUri(styletPath);
 
         // Use a nonce to only allow specific scripts to be run
         const nonce = getNonce();
@@ -169,16 +128,12 @@ export class CatCodingPanel {
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-				<link href="${stylesResetUri}" rel="stylesheet">
-				<link href="${stylesMainUri}" rel="stylesheet">
-
+				<link href="${stylesUri}" rel="stylesheet">
 				<title>Cat Coding</title>
 			</head>
 			<body>
-				<img src="${catGifPath}" width="300" />
-				<h1 id="lines-of-code-counter">0</h1>
-
-				<script nonce="${nonce}" src="${scriptUri}"></script>
+			<div id="root"></div>
+			<script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;
     }
