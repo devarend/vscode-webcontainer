@@ -6,7 +6,8 @@ export function getWebviewOptions(extensionUri: Uri): WebviewOptions {
         enableScripts: true,
 
         // And restrict the webview to only loading content from our extension's `media` directory.
-        localResourceRoots: [Uri.joinPath(extensionUri, 'media')]
+        localResourceRoots: [          Uri.joinPath(extensionUri, 'out'),
+            Uri.joinPath(extensionUri, 'web-ui/build')]
     };
 }
 
@@ -100,18 +101,16 @@ export class WebcontainerPanel {
 
     private _getHtmlForWebview(webview: Webview) {
         // Local path to main script run in the webview
-        const scriptPathOnDisk = Uri.joinPath(this._extensionUri, 'media', 'main.js');
+        const scriptPath = Uri.joinPath(this._extensionUri, 'web-ui', 'dist', 'assets', 'index.js');
 
         // And the uri we use to load this script in the webview
-        const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
+        const scriptUri = webview.asWebviewUri(scriptPath);
 
         // Local path to css styles
-        const styleResetPath = Uri.joinPath(this._extensionUri, 'media', 'reset.css');
-        const stylesPathMainPath = Uri.joinPath(this._extensionUri, 'media', 'vscode.css');
+        const styletPath = Uri.joinPath(this._extensionUri, 'web-ui', 'dist', 'assets', 'index.css');
 
         // Uri to load styles into webview
-        const stylesResetUri = webview.asWebviewUri(styleResetPath);
-        const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
+        const stylesUri = webview.asWebviewUri(styletPath);
 
         // Use a nonce to only allow specific scripts to be run
         const nonce = getNonce();
@@ -129,14 +128,12 @@ export class WebcontainerPanel {
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-				<link href="${stylesResetUri}" rel="stylesheet">
-				<link href="${stylesMainUri}" rel="stylesheet">
-
+				<link href="${stylesUri}" rel="stylesheet">
 				<title>Cat Coding</title>
 			</head>
 			<body>
-				<h1 id="lines-of-code-counter">0</h1>
-				<script nonce="${nonce}" src="${scriptUri}"></script>
+			<div id="root"></div>
+			<script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;
     }
