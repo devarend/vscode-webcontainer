@@ -12,5 +12,11 @@ export default defineConfig({
         assetFileNames: `assets/[name].[ext]`
       }
     }
-  }
+  },
+  server: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
+  },
 })
