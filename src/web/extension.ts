@@ -1,20 +1,24 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import {window, ViewColumn, ExtensionContext, commands, Uri, WebviewPanel} from 'vscode';
+import {window, ViewColumn, ExtensionContext, commands, WebviewPanel, workspace} from 'vscode';
 import {WebcontainerPanel, getWebviewOptions} from "./panel/WebcontainerPanel";
 
 export function activate(context: ExtensionContext) {
     context.subscriptions.push(
-        commands.registerCommand('vscode-webcontainer.helloWorld', () => {
+        commands.registerCommand('vscode-webcontainer.openTerminal', () => {
             WebcontainerPanel.createOrShow(context.extensionUri);
         })
     );
 
     context.subscriptions.push(
-        commands.registerCommand('catCoding.doRefactor', () => {
-            if (WebcontainerPanel.currentPanel) {
-                WebcontainerPanel.currentPanel.doRefactor();
-            }
+        commands.registerCommand('vscode-webcontainer.readFiles', async () => {
+            const files = await workspace.findFiles('**/*.*', '**/node_modules/**');
+            console.log(files.length.toString())
+            files.forEach(file => {
+                // vscode.window.showInformationMessage('Hello VS Code!!!!!');
+            });
+            const doc = await workspace.openTextDocument({ content: `${files.length.toString()} files` });
+            window.showTextDocument(doc, { viewColumn: ViewColumn.Beside });
         })
     );
 
