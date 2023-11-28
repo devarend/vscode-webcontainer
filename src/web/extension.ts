@@ -12,14 +12,22 @@ export function activate(context: ExtensionContext) {
 
     context.subscriptions.push(
         commands.registerCommand('vscode-webcontainer.readFiles', async () => {
-            const files = await workspace.findFiles('**/*.*', '**/node_modules/**');
             const folder = workspace.workspaceFolders?.[0]
-            files.forEach(async file => {
-                const readData = await workspace.fs.readFile(file);
-                const value = new TextDecoder().decode(readData);
-                const path = file.path.replace(folder?.uri.path ?? '', '')
-                console.log(path)
-            });
+            if (!folder) return
+            for (const [name, type] of await workspace.fs.readDirectory(folder.uri)) {
+                if (type === FileType.File) {
+                    console.log('file', name)
+                }
+                if (type === FileType.Directory) {
+                    console.log('directory:', name)
+                }
+            }
+            // files.forEach(async file => {
+            //     const readData = await workspace.fs.readFile(file);
+            //     const value = new TextDecoder().decode(readData);
+            //     const path = file.path.replace(folder?.uri.path ?? '', '')
+            //     console.log(path)
+            // });
         })
     );
 
