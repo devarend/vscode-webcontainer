@@ -59,7 +59,7 @@ export class WebcontainerPanel {
         // Set the webview's initial html content
         this._panel.webview.html = this._getHtmlForWebview(
             this._panel.webview
-        )
+        );
         // Listen for when the panel is disposed
         // This happens when the user closes the panel or when the panel is closed programmatically
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
@@ -124,7 +124,7 @@ export class WebcontainerPanel {
 					Use a content security policy to only allow loading images from https or from our extension directory,
 					and only allow scripts that have a specific nonce.
 				-->
-				<meta http-equiv="Content-Security-Policy" content="default-src https://stackblitz.com/ *.webcontainer.io/; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' https://stackblitz.com/ *.webcontainer.io/;">
+				<meta http-equiv="Content-Security-Policy" content="default-src https://stackblitz.com/ *.webcontainer.io/; style-src ${webview.cspSource} 'self' 'unsafe-inline'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' https://stackblitz.com/ *.webcontainer.io/;">
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
