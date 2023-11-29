@@ -18,9 +18,12 @@ export function activate(context: ExtensionContext) {
             const transformToWebcontainerFiles = async (dir: Uri, files: any = {}) => {
                 for (const [name, type] of await workspace.fs.readDirectory(dir)) {
                     if (type === FileType.File) {
+                        const filePath = Uri.joinPath(dir, name)
+                        const readData = await workspace.fs.readFile(filePath);
+                        const value = new TextDecoder().decode(readData);
                         files[name] = {
                             file: {
-                                contents: 'test',
+                                contents: value,
                             },
                         };
                     }
@@ -35,13 +38,7 @@ export function activate(context: ExtensionContext) {
             }
 
             const files = await transformToWebcontainerFiles(folder.uri)
-            console.log(files)
-            // files.forEach(async file => {
-            //     const readData = await workspace.fs.readFile(file);
-            //     const value = new TextDecoder().decode(readData);
-            //     const path = file.path.replace(folder?.uri.path ?? '', '')
-            //     console.log(path)
-            // });
+            console.log(files['README.md'])
         })
     );
 
