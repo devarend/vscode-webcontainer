@@ -1,8 +1,36 @@
 import 'xterm/css/xterm.css';
 import {useEffect, useRef, useState} from 'react'
 import {WebContainer} from "@webcontainer/api";
-import {files} from "./files";
 import { Terminal } from 'xterm'
+import {workspace, FileType, Uri} from 'vscode';
+
+const getWebContainerFiles = async () => {
+    const folder = workspace.workspaceFolders?.[0]
+    if (!folder) return
+
+    const transformToWebcontainerFiles = async (dir: Uri, files: any = {}) => {
+        for (const [name, type] of await workspace.fs.readDirectory(dir)) {
+            if (type === FileType.File) {
+                const filePath = Uri.joinPath(dir, name)
+                const readData = await workspace.fs.readFile(filePath);
+                const value = new TextDecoder().decode(readData);
+                files[name] = {
+                    file: {
+                        contents: value,
+                    },
+                };
+            }
+            if (type === FileType.Directory) {
+                files[name] = {
+                    directory: {},
+                };
+                await transformToWebcontainerFiles(Uri.joinPath(dir, name), files[name].directory);
+            }
+        }
+        return files
+    }
+    return await transformToWebcontainerFiles(folder.uri)
+}
 
 function App() {
     const webcontainerInstance = useRef<any>();
@@ -36,6 +64,7 @@ function App() {
             });
             terminal.open(terminalEl as HTMLElement);
             webcontainerInstance.current = await WebContainer.boot();
+            const files = getWebContainerFiles()
             await webcontainerInstance.current.mount(files);
 
             webcontainerInstance.current.on("server-ready", (port, url) => {
