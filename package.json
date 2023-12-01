@@ -14,8 +14,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-webcontainer.helloWorld",
-        "title": "Hello World"
+        "command": "vscode-webcontainer.openTerminal",
+        "title": "Open terminal"
+      },
+      {
+        "command": "vscode-webcontainer.readFiles",
+        "title": "Read files"
       }
     ]
   },
