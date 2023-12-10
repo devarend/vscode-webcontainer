@@ -2,35 +2,13 @@ import 'xterm/css/xterm.css';
 import {useEffect, useRef, useState} from 'react'
 import {WebContainer} from "@webcontainer/api";
 import { Terminal } from 'xterm'
-import {workspace, FileType, Uri} from 'vscode';
+// import {files} from "./files";
 
-const getWebContainerFiles = async () => {
-    const folder = workspace.workspaceFolders?.[0]
-    if (!folder) return
-
-    const transformToWebcontainerFiles = async (dir: Uri, files: any = {}) => {
-        for (const [name, type] of await workspace.fs.readDirectory(dir)) {
-            if (type === FileType.File) {
-                const filePath = Uri.joinPath(dir, name)
-                const readData = await workspace.fs.readFile(filePath);
-                const value = new TextDecoder().decode(readData);
-                files[name] = {
-                    file: {
-                        contents: value,
-                    },
-                };
-            }
-            if (type === FileType.Directory) {
-                files[name] = {
-                    directory: {},
-                };
-                await transformToWebcontainerFiles(Uri.joinPath(dir, name), files[name].directory);
-            }
-        }
-        return files
-    }
-    return await transformToWebcontainerFiles(folder.uri)
+//Insert this into your App.tsx file after the imports.
+interface vscode {
+    postMessage(message: any): void;
 }
+declare const vscode: vscode;
 
 function App() {
     const webcontainerInstance = useRef<any>();
@@ -57,23 +35,30 @@ function App() {
     };
 
     useEffect(() => {
-        (async () => {
-            const terminalEl = document.querySelector('.terminal');
-            const terminal = new Terminal({
-                convertEol: true,
-            });
-            terminal.open(terminalEl as HTMLElement);
-            webcontainerInstance.current = await WebContainer.boot();
-            const files = getWebContainerFiles()
-            await webcontainerInstance.current.mount(files);
+        window.addEventListener('message', event => {
+            const message = event.data; // The json data that the extension sent
+            switch (message.command) {
+                case 'refactor':
+                    (async () => {
+                        const terminalEl = document.querySelector('.terminal');
+                        const terminal = new Terminal({
+                            convertEol: true,
+                        });
+                        terminal.open(terminalEl as HTMLElement);
+                        webcontainerInstance.current = await WebContainer.boot();
+                        const bootFiles = message.files
+                        await webcontainerInstance.current.mount(bootFiles);
 
-            webcontainerInstance.current.on("server-ready", (port, url) => {
-                setUrl(url);
-                iframeRef.current.src = url;
-                setIsInitializing(false);
-            });
-            await startShell(terminal);
-        })();
+                        webcontainerInstance.current.on("server-ready", (port, url) => {
+                            setUrl(url);
+                            iframeRef.current.src = url;
+                            setIsInitializing(false);
+                        });
+                        await startShell(terminal);
+                    })();
+                    break;
+            }
+        });
     }, []);
 
     const iframeStyle = isInitializing
@@ -82,8 +67,13 @@ function App() {
             backgroundRepeat: "no-repeat",
             backgroundSize: "fit",
             backgroundPosition: "center center",
+            height: '600px',
+            width: '600px'
         }
-        : {};
+        : {
+        height: '600px',
+            width: '600px'
+        };
 
 
     return (
@@ -94,7 +84,7 @@ function App() {
                     <h1>{isInitializing ? "Initializing zkApp..." : `${url}`}</h1>
                     <iframe
                         ref={iframeRef}
-                        className="h-full border-2 border-black"
+                        className="border-2 border-black"
                         style={iframeStyle}
                         allow="cross-origin-isolated"
                     />

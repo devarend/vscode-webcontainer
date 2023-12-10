@@ -1,4 +1,4 @@
-import {Uri, ViewColumn, Webview, WebviewOptions, WebviewPanel, window, Disposable} from "vscode";
+import {Uri, ViewColumn, Webview, WebviewOptions, WebviewPanel, window, Disposable, workspace, FileType} from "vscode";
 
 export function getWebviewOptions(extensionUri: Uri): WebviewOptions {
     return {
@@ -77,12 +77,43 @@ export class WebcontainerPanel {
             null,
             this._disposables
         );
+        this.doRefactor();
     }
 
-    public doRefactor() {
+    public async doRefactor() {
         // Send a message to the webview webview.
         // You can send any JSON serializable data.
-        this._panel.webview.postMessage({ command: 'refactor' });
+        const folder = workspace.workspaceFolders?.[0];
+        if (!folder) {
+            return;
+        }
+
+        const transformToWebcontainerFiles = async (dir: Uri, files: any = {}) => {
+            for (const [name, type] of await workspace.fs.readDirectory(dir)) {
+                if (type === FileType.File) {
+                    const filePath = Uri.joinPath(dir, name);
+                    const readData = await workspace.fs.readFile(filePath);
+                    const value = new TextDecoder().decode(readData);
+                    files[name] = {
+                        file: {
+                            contents: value,
+                        },
+                    };
+                }
+                if (type === FileType.Directory) {
+                    files[name] = {
+                        directory: {},
+                    };
+                    await transformToWebcontainerFiles(Uri.joinPath(dir, name), files[name].directory);
+                }
+            }
+            return files;
+        };
+
+        const files = await transformToWebcontainerFiles(folder.uri);
+
+        this._panel.webview.postMessage({command: 'refactor', files});
+        // this._panel.webview.postMessage({ command: 'refactor' });
     }
 
     public dispose() {
