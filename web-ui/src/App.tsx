@@ -2,7 +2,7 @@ import 'xterm/css/xterm.css';
 import {useEffect, useRef, useState} from 'react'
 import {WebContainer} from "@webcontainer/api";
 import { Terminal } from 'xterm'
-// import {files} from "./files";
+import { FitAddon } from 'xterm-addon-fit';
 
 //Insert this into your App.tsx file after the imports.
 interface vscode {
@@ -16,24 +16,6 @@ function App() {
     const [url, setUrl] = useState("");
     const iframeRef = useRef<any>(null);
 
-    const startShell = async terminal => {
-        const shellProcess = await webcontainerInstance.current.spawn('jsh');
-        shellProcess.output.pipeTo(
-            new WritableStream({
-                write(data) {
-                    terminal.write(data);
-                },
-            })
-        );
-
-        const input = shellProcess.input.getWriter();
-        terminal.onData((data) => {
-            input.write(data);
-        });
-
-        return shellProcess;
-    };
-
     useEffect(() => {
         window.addEventListener('message', event => {
             const message = event.data; // The json data that the extension sent
@@ -44,7 +26,10 @@ function App() {
                         const terminal = new Terminal({
                             convertEol: true,
                         });
+                        const fitAddon = new FitAddon();
+                        terminal.loadAddon(fitAddon);
                         terminal.open(terminalEl as HTMLElement);
+                        fitAddon.fit();
                         webcontainerInstance.current = await WebContainer.boot();
                         const bootFiles = message.files
                         await webcontainerInstance.current.mount(bootFiles);
@@ -54,41 +39,42 @@ function App() {
                             iframeRef.current.src = url;
                             setIsInitializing(false);
                         });
-                        await startShell(terminal);
+
+                        const shellProcess = await webcontainerInstance.current.spawn('jsh');
+
+                        const xtermResizeOb = new ResizeObserver(function (entries) {
+                            fitAddon.fit();
+                            shellProcess.resize({
+                                cols: terminal.cols,
+                                rows: terminal.rows,
+                            });
+                        });
+
+                        xtermResizeOb.observe(terminalEl);
+
+                        shellProcess.output.pipeTo(
+                            new WritableStream({
+                                write(data) {
+                                    terminal.write(data);
+                                },
+                            })
+                        );
+
+                        const input = shellProcess.input.getWriter();
+                        terminal.onData((data) => {
+                            input.write(data);
+                        });
                     })();
                     break;
             }
         });
     }, []);
 
-    const iframeStyle = isInitializing
-        ? {
-            backgroundImage: "url('http://localhost:3000/loader.gif')",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "fit",
-            backgroundPosition: "center center",
-            height: '600px',
-            width: '600px'
-        }
-        : {
-        height: '600px',
-            width: '600px'
-        };
-
 
     return (
         <>
-            <div className="flex">
-                <div className="terminal"/>
-                <div className="flex-1 ml-2">
-                    <h1>{isInitializing ? "Initializing zkApp..." : `${url}`}</h1>
-                    <iframe
-                        ref={iframeRef}
-                        className="border-2 border-black"
-                        style={iframeStyle}
-                        allow="cross-origin-isolated"
-                    />
-                </div>
+            <div className="flex h-screen bg-black">
+                <div className="terminal h-full w-full"/>
             </div>
         </>
     );
