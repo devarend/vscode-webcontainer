@@ -1,10 +1,10 @@
-import {Uri, ViewColumn, Webview, WebviewOptions, WebviewPanel, window, Disposable, workspace, FileType} from "vscode";
+import {Uri, ViewColumn, Webview, WebviewPanel, window, Disposable, workspace, FileType} from "vscode";
 
-export function getWebviewOptions(extensionUri: Uri): WebviewOptions {
+export function getWebviewOptions(extensionUri: Uri) {
     return {
         // Enable javascript in the webview
         enableScripts: true,
-
+        retainContextWhenHidden: true,
         // And restrict the webview to only loading content from our extension's `media` directory.
         localResourceRoots: [          Uri.joinPath(extensionUri, 'out'),
             Uri.joinPath(extensionUri, 'web-ui/build')]
@@ -112,8 +112,7 @@ export class WebcontainerPanel {
 
         const files = await transformToWebcontainerFiles(folder.uri);
 
-        this._panel.webview.postMessage({command: 'refactor', files});
-        // this._panel.webview.postMessage({ command: 'refactor' });
+        this._panel.webview.postMessage({command: 'loadFiles', files});
     }
 
     public dispose() {

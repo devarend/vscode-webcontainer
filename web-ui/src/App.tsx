@@ -12,16 +12,16 @@ declare const vscode: vscode;
 
 function App() {
     const webcontainerInstance = useRef<any>();
-    const [isInitializing, setIsInitializing] = useState(true);
     const [url, setUrl] = useState("");
     const iframeRef = useRef<any>(null);
 
     useEffect(() => {
         window.addEventListener('message', event => {
-            const message = event.data; // The json data that the extension sent
+            const message = event.data;
             switch (message.command) {
-                case 'refactor':
+                case 'loadFiles':
                     (async () => {
+                        // vscode.postMessage({command: 'alert', text: ''})
                         const terminalEl = document.querySelector('.terminal');
                         const terminal = new Terminal({
                             convertEol: true,
@@ -37,7 +37,6 @@ function App() {
                         webcontainerInstance.current.on("server-ready", (port, url) => {
                             setUrl(url);
                             iframeRef.current.src = url;
-                            setIsInitializing(false);
                         });
 
                         const shellProcess = await webcontainerInstance.current.spawn('jsh');
