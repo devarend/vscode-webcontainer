@@ -4,11 +4,13 @@ import {WebContainer} from "@webcontainer/api";
 import { Terminal } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit';
 
-//Insert this into your App.tsx file after the imports.
-interface vscode {
+interface VsCodeApi {
     postMessage(message: any): void;
+    setState(state: any): void;
+    getState(): any;
 }
-declare const vscode: vscode;
+
+declare const acquireVsCodeApi: () => VsCodeApi;
 
 function App() {
     const webcontainerInstance = useRef<any>();
@@ -21,7 +23,8 @@ function App() {
             switch (message.command) {
                 case 'loadFiles':
                     (async () => {
-                        // vscode.postMessage({command: 'alert', text: ''})
+                        const vscode = acquireVsCodeApi();
+                        vscode.postMessage({command: 'alert', text: 'test'})
                         const terminalEl = document.querySelector('.terminal');
                         const terminal = new Terminal({
                             convertEol: true,
