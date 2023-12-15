@@ -1,4 +1,4 @@
-import {Uri, ViewColumn, Webview, WebviewPanel, window, Disposable, workspace, FileType} from "vscode";
+import {Uri, ViewColumn, Webview, WebviewPanel, window, Disposable, workspace, FileType, commands} from "vscode";
 
 export function getWebviewOptions(extensionUri: Uri) {
     return {
@@ -6,7 +6,7 @@ export function getWebviewOptions(extensionUri: Uri) {
         enableScripts: true,
         retainContextWhenHidden: true,
         // And restrict the webview to only loading content from our extension's `media` directory.
-        localResourceRoots: [          Uri.joinPath(extensionUri, 'out'),
+        localResourceRoots: [Uri.joinPath(extensionUri, 'out'),
             Uri.joinPath(extensionUri, 'web-ui/build')]
     };
 }
@@ -69,8 +69,9 @@ export class WebcontainerPanel {
         this._panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
-                    case 'alert':
-                        window.showErrorMessage(message.text);
+                    case 'preview':
+                        commands.executeCommand('simpleBrowser.show', Uri.parse(message.text));
+                        // window.showErrorMessage(message.text);
                         return;
                 }
             },

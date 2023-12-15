@@ -1,12 +1,14 @@
 import 'xterm/css/xterm.css';
 import {useEffect, useRef, useState} from 'react'
 import {WebContainer} from "@webcontainer/api";
-import { Terminal } from 'xterm'
-import { FitAddon } from 'xterm-addon-fit';
+import {Terminal} from 'xterm'
+import {FitAddon} from 'xterm-addon-fit';
 
 interface VsCodeApi {
     postMessage(message: any): void;
+
     setState(state: any): void;
+
     getState(): any;
 }
 
@@ -24,7 +26,6 @@ function App() {
                 case 'loadFiles':
                     (async () => {
                         const vscode = acquireVsCodeApi();
-                        vscode.postMessage({command: 'alert', text: 'test'})
                         const terminalEl = document.querySelector('.terminal');
                         const terminal = new Terminal({
                             convertEol: true,
@@ -38,8 +39,9 @@ function App() {
                         await webcontainerInstance.current.mount(bootFiles);
 
                         webcontainerInstance.current.on("server-ready", (port, url) => {
-                            setUrl(url);
-                            iframeRef.current.src = url;
+                            vscode.postMessage({command: 'preview', text: url})
+                            // setUrl(url);
+                            // iframeRef.current.src = url;
                         });
 
                         const shellProcess = await webcontainerInstance.current.spawn('jsh');
