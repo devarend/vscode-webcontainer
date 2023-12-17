@@ -1,12 +1,13 @@
-import {Uri, ViewColumn, Webview, WebviewOptions, WebviewPanel, window, Disposable} from "vscode";
+import {Uri, ViewColumn, Webview, WebviewPanel, window, Disposable, workspace, FileType, commands} from "vscode";
+import {PreviewPanel} from "./PreviewPanel";
 
-export function getWebviewOptions(extensionUri: Uri): WebviewOptions {
+export function getWebviewOptions(extensionUri: Uri) {
     return {
         // Enable javascript in the webview
         enableScripts: true,
-
+        retainContextWhenHidden: true,
         // And restrict the webview to only loading content from our extension's `media` directory.
-        localResourceRoots: [          Uri.joinPath(extensionUri, 'out'),
+        localResourceRoots: [Uri.joinPath(extensionUri, 'out'),
             Uri.joinPath(extensionUri, 'web-ui/build')]
     };
 }
@@ -26,7 +27,7 @@ export class WebcontainerPanel {
     private readonly _extensionUri: Uri;
     private _disposables: Disposable[] = [];
 
-    public static createOrShow(extensionUri: Uri) {
+    public static createOrShow(extensionUri: Uri, previewPanel: PreviewPanel) {
         const column = window.activeTextEditor
             ? window.activeTextEditor.viewColumn
             : undefined;
@@ -45,14 +46,20 @@ export class WebcontainerPanel {
             getWebviewOptions(extensionUri),
         );
 
-        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri);
+        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri, previewPanel);
     }
 
-    public static revive(panel: WebviewPanel, extensionUri: Uri) {
-        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri);
+    public static revive(panel: WebviewPanel, extensionUri: Uri, preview: any) {
+        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri, preview);
     }
 
-    private constructor(panel: WebviewPanel, extensionUri: Uri) {
+    public static send() {
+        if (WebcontainerPanel.currentPanel instanceof WebcontainerPanel) {
+            WebcontainerPanel.currentPanel._panel.webview.postMessage({command: 'test', test: 'test'});
+        }
+    }
+
+    private constructor(panel: WebviewPanel, extensionUri: Uri, previewPanel: any) {
         this._panel = panel;
         this._extensionUri = extensionUri;
 
@@ -69,20 +76,50 @@ export class WebcontainerPanel {
         this._panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
-                    case 'alert':
-                        window.showErrorMessage(message.text);
+                    case 'preview':
+                        previewPanel.send(message.text);
                         return;
                 }
             },
             null,
             this._disposables
         );
+        this.doRefactor();
     }
 
-    public doRefactor() {
+    public async doRefactor() {
         // Send a message to the webview webview.
         // You can send any JSON serializable data.
-        this._panel.webview.postMessage({ command: 'refactor' });
+        const folder = workspace.workspaceFolders?.[0];
+        if (!folder) {
+            return;
+        }
+
+        const transformToWebcontainerFiles = async (dir: Uri, files: any = {}) => {
+            for (const [name, type] of await workspace.fs.readDirectory(dir)) {
+                if (type === FileType.File) {
+                    const filePath = Uri.joinPath(dir, name);
+                    const readData = await workspace.fs.readFile(filePath);
+                    const value = new TextDecoder().decode(readData);
+                    files[name] = {
+                        file: {
+                            contents: value,
+                        },
+                    };
+                }
+                if (type === FileType.Directory) {
+                    files[name] = {
+                        directory: {},
+                    };
+                    await transformToWebcontainerFiles(Uri.joinPath(dir, name), files[name].directory);
+                }
+            }
+            return files;
+        };
+
+        const files = await transformToWebcontainerFiles(folder.uri);
+
+        this._panel.webview.postMessage({command: 'loadFiles', files});
     }
 
     public dispose() {
