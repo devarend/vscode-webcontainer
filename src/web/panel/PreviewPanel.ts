@@ -1,5 +1,16 @@
 import {Uri, ViewColumn, Webview, WebviewPanel, window, Disposable} from "vscode";
 
+export function getWebviewOptions(extensionUri: Uri) {
+    return {
+        // Enable javascript in the webview
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        // And restrict the webview to only loading content from our extension's `media` directory.
+        localResourceRoots: [
+            Uri.joinPath(extensionUri, 'preview')]
+    };
+}
+
 /**
  * Manages webcontainer webview panels
  */
@@ -31,7 +42,7 @@ export class PreviewPanel {
             PreviewPanel.viewType,
             'terminal',
             column || ViewColumn.One,
-            {retainContextWhenHidden: true},
+            getWebviewOptions(extensionUri),
         );
 
         PreviewPanel.currentPanel = new PreviewPanel(panel, extensionUri);
@@ -68,8 +79,17 @@ export class PreviewPanel {
         }
     }
 
+    public static send(url: string) {
+        if (PreviewPanel.currentPanel instanceof PreviewPanel) {
+            PreviewPanel.currentPanel._panel.webview.postMessage({command: 'preview', url});
+        }
+    }
+
     private _getHtmlForWebview(webview: Webview) {
         // Use a nonce to only allow specific scripts to be run
+        const scriptPathOnDisk = Uri.joinPath(this._extensionUri, 'preview', 'script.js');
+        // And the uri we use to load this script in the webview
+        const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
         const nonce = getNonce();
 
         return `<!DOCTYPE html>
@@ -86,20 +106,9 @@ export class PreviewPanel {
 				<title>Preview</title>
 			</head>
 			<body>
-			   <iframe allow="cross-origin-isolated" />
+			    <iframe style="position: fixed; border:none; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%;" src="" allow="cross-origin-isolated"></iframe>
+                <script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
-			<script>
-			    const iframeEl = document.querySelector('iframe');
-                window.addEventListener('message', event => {
-                    const message = event.data; // The JSON data our extension sent
-                    switch (message.command) {
-                        case 'loadFiles':
-                            console.log('ok')
-                            iframeEl.src = url;
-                            break;
-                    }
-                });
-            </script>
 			</html>`;
     }
 }

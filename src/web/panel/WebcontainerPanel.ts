@@ -1,4 +1,5 @@
 import {Uri, ViewColumn, Webview, WebviewPanel, window, Disposable, workspace, FileType, commands} from "vscode";
+import {PreviewPanel} from "./PreviewPanel";
 
 export function getWebviewOptions(extensionUri: Uri) {
     return {
@@ -26,7 +27,7 @@ export class WebcontainerPanel {
     private readonly _extensionUri: Uri;
     private _disposables: Disposable[] = [];
 
-    public static createOrShow(extensionUri: Uri) {
+    public static createOrShow(extensionUri: Uri, previewPanel: PreviewPanel) {
         const column = window.activeTextEditor
             ? window.activeTextEditor.viewColumn
             : undefined;
@@ -45,14 +46,20 @@ export class WebcontainerPanel {
             getWebviewOptions(extensionUri),
         );
 
-        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri);
+        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri, previewPanel);
     }
 
-    public static revive(panel: WebviewPanel, extensionUri: Uri) {
-        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri);
+    public static revive(panel: WebviewPanel, extensionUri: Uri, preview: any) {
+        WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri, preview);
     }
 
-    private constructor(panel: WebviewPanel, extensionUri: Uri) {
+    public static send() {
+        if (WebcontainerPanel.currentPanel instanceof WebcontainerPanel) {
+            WebcontainerPanel.currentPanel._panel.webview.postMessage({command: 'test', test: 'test'});
+        }
+    }
+
+    private constructor(panel: WebviewPanel, extensionUri: Uri, previewPanel: any) {
         this._panel = panel;
         this._extensionUri = extensionUri;
 
@@ -70,8 +77,7 @@ export class WebcontainerPanel {
             message => {
                 switch (message.command) {
                     case 'preview':
-                        commands.executeCommand('simpleBrowser.show', Uri.parse(message.text));
-                        // window.showErrorMessage(message.text);
+                        previewPanel.send(message.text);
                         return;
                 }
             },

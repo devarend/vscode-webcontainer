@@ -5,17 +5,17 @@ import {WebcontainerPanel, getWebviewOptions} from "./panel/WebcontainerPanel";
 import {PreviewPanel} from "./panel/PreviewPanel";
 
 export function activate(context: ExtensionContext) {
-
-    const
+    const preview = PreviewPanel;
     context.subscriptions.push(
         commands.registerCommand('vscode-webcontainer.openTerminal', () => {
-            WebcontainerPanel.createOrShow(context.extensionUri);
+            WebcontainerPanel.createOrShow(context.extensionUri, preview);
         })
     );
 
     context.subscriptions.push(
         commands.registerCommand('vscode-webcontainer.readFiles', async () => {
-            PreviewPanel.createOrShow(context.extensionUri);
+            preview.createOrShow(context.extensionUri);
+            // PreviewPanel.send();
         })
     );
 
@@ -26,7 +26,10 @@ export function activate(context: ExtensionContext) {
                 console.log(`Got state: ${state}`);
                 // Reset the webview options so we use latest uri for `localResourceRoots`.
                 webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
-                WebcontainerPanel.revive(webviewPanel, context.extensionUri);
+                WebcontainerPanel.revive(webviewPanel, context.extensionUri, preview);
+
+                // webviewPanel.webview.options = getWebviewOptions(context.extensionUri);
+                // PreviewPanel.revive(webviewPanel, context.extensionUri);
             }
         });
     }
