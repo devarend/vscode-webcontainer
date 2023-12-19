@@ -87,10 +87,10 @@ export class WebcontainerPanel {
             async (event) => {
                 const uri = event.document.uri;
                 const folder = workspace.getWorkspaceFolder(uri);
-                const filePath = uri.path.replace(folder?.uri.path ?? '', '');
+                const path = uri.path.replace(folder?.uri.path ?? '', '');
                 const readData = await workspace.fs.readFile(uri);
                 const value = new TextDecoder().decode(readData);
-                console.log(value, filePath);
+                this._panel.webview.postMessage({command: 'updateFile', path, value});
             },
             undefined,
             []

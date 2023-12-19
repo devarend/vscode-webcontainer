@@ -23,6 +23,9 @@ function App() {
         window.addEventListener('message', event => {
             const message = event.data;
             switch (message.command) {
+                case 'updateFile':
+                    webcontainerInstance.current.fs.writeFile(message.path, message.value)
+                    break;
                 case 'loadFiles':
                     (async () => {
                         const vscode = acquireVsCodeApi();
