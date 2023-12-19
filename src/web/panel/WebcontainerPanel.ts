@@ -53,12 +53,6 @@ export class WebcontainerPanel {
         WebcontainerPanel.currentPanel = new WebcontainerPanel(panel, extensionUri, preview);
     }
 
-    public static send() {
-        if (WebcontainerPanel.currentPanel instanceof WebcontainerPanel) {
-            WebcontainerPanel.currentPanel._panel.webview.postMessage({command: 'test', test: 'test'});
-        }
-    }
-
     private constructor(panel: WebviewPanel, extensionUri: Uri, previewPanel: any) {
         this._panel = panel;
         this._extensionUri = extensionUri;
@@ -77,6 +71,7 @@ export class WebcontainerPanel {
             message => {
                 switch (message.command) {
                     case 'preview':
+                        previewPanel.createOrShow(this._extensionUri);
                         previewPanel.send(message.text);
                         return;
                 }
@@ -88,8 +83,19 @@ export class WebcontainerPanel {
     }
 
     public async doRefactor() {
-        // Send a message to the webview webview.
-        // You can send any JSON serializable data.
+        workspace.onDidChangeTextDocument(
+            async (event) => {
+                const uri = event.document.uri;
+                const folder = workspace.getWorkspaceFolder(uri);
+                const filePath = uri.path.replace(folder?.uri.path ?? '', '');
+                const readData = await workspace.fs.readFile(uri);
+                const value = new TextDecoder().decode(readData);
+                console.log(value, filePath);
+            },
+            undefined,
+            []
+        );
+
         const folder = workspace.workspaceFolders?.[0];
         if (!folder) {
             return;
