@@ -175,8 +175,8 @@ function App() {
                                 },
                             })
                         );
-                        setValue(message.files.ui.directory.src.directory.pages.directory['_app.page.tsx'].file.contents)
 
+                        setValue(message.files.ui.directory.src.directory.pages.directory['_app.page.tsx'].file.contents)
 
                         const input = shellProcess.input.getWriter();
                         terminal.onData((data) => {

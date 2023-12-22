@@ -92,8 +92,8 @@ export class WebcontainerPanel {
                 const value = new TextDecoder().decode(readData);
                 this._panel.webview.postMessage({command: 'updateFile', path, value});
             },
-            undefined,
-            []
+            null,
+            this._disposables
         );
 
         const folder = workspace.workspaceFolders?.[0];
@@ -125,7 +125,7 @@ export class WebcontainerPanel {
 
         const files = await transformToWebcontainerFiles(folder.uri);
 
-        this._panel.webview.postMessage({command: 'loadFiles', files});
+        // this._panel.webview.postMessage({command: 'loadFiles', files});
     }
 
     public dispose() {
