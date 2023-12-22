@@ -16,13 +16,15 @@ declare const acquireVsCodeApi: () => VsCodeApi;
 
 function App() {
     const webcontainerInstance = useRef<any>();
-    const [url, setUrl] = useState("");
-    const iframeRef = useRef<any>(null);
 
     useEffect(() => {
+
         window.addEventListener('message', event => {
             const message = event.data;
             switch (message.command) {
+                case 'updateFile':
+                    webcontainerInstance.current.fs.writeFile(message.path, message.value)
+                    break;
                 case 'loadFiles':
                     (async () => {
                         const vscode = acquireVsCodeApi();
@@ -40,8 +42,6 @@ function App() {
 
                         webcontainerInstance.current.on("server-ready", (port, url) => {
                             vscode.postMessage({command: 'preview', text: url})
-                            // setUrl(url);
-                            // iframeRef.current.src = url;
                         });
 
                         const shellProcess = await webcontainerInstance.current.spawn('jsh');
@@ -74,10 +74,9 @@ function App() {
         });
     }, []);
 
-
     return (
         <>
-            <div className="flex h-screen bg-black">
+            <div className="flex h-screen">
                 <div className="terminal h-full w-full"/>
             </div>
         </>

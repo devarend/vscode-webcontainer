@@ -40,7 +40,7 @@ export class PreviewPanel {
         // Otherwise, create a new panel.
         const panel = window.createWebviewPanel(
             PreviewPanel.viewType,
-            'terminal',
+            'Preview',
             column || ViewColumn.One,
             getWebviewOptions(extensionUri),
         );

@@ -15,7 +15,6 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(
         commands.registerCommand('vscode-webcontainer.readFiles', async () => {
             preview.createOrShow(context.extensionUri);
-            // PreviewPanel.send();
         })
     );
 
