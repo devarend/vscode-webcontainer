@@ -41,7 +41,7 @@ export class WebcontainerPanel {
         // Otherwise, create a new panel.
         const panel = window.createWebviewPanel(
             WebcontainerPanel.viewType,
-            'terminal',
+            'Terminal',
             column || ViewColumn.One,
             getWebviewOptions(extensionUri),
         );
@@ -124,8 +124,7 @@ export class WebcontainerPanel {
         };
 
         const files = await transformToWebcontainerFiles(folder.uri);
-
-        // this._panel.webview.postMessage({command: 'loadFiles', files});
+        this._panel.webview.postMessage({command: 'loadFiles', files});
     }
 
     public dispose() {
