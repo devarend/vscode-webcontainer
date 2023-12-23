@@ -73,16 +73,18 @@ export class WebcontainerPanel {
                     case 'preview':
                         previewPanel.createOrShow(this._extensionUri);
                         previewPanel.send(message.text);
-                        return;
+                        break;
+                    case 'initialize':
+                        this.initalize();
+                        break;
                 }
             },
             null,
             this._disposables
         );
-        this.doRefactor();
     }
 
-    public async doRefactor() {
+    public async initalize() {
         workspace.onDidChangeTextDocument(
             async (event) => {
                 const uri = event.document.uri;
