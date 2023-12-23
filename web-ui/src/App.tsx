@@ -18,6 +18,7 @@ function App() {
     const webcontainerInstance = useRef<any>();
 
     useEffect(() => {
+        const vscode = acquireVsCodeApi();
 
         window.addEventListener('message', event => {
             const message = event.data;
@@ -27,7 +28,6 @@ function App() {
                     break;
                 case 'loadFiles':
                     (async () => {
-                        const vscode = acquireVsCodeApi();
                         const terminalEl = document.querySelector('.terminal');
                         const terminal = new Terminal({
                             convertEol: true,
@@ -72,6 +72,7 @@ function App() {
                     break;
             }
         });
+        vscode.postMessage({command: 'initialize'})
     }, []);
 
     return (
